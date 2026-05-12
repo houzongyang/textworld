@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>生活技能文字冒险</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --line: #d0d5dd;
+      --soft: #eef2ff;
+      --shadow: 0 18px 50px rgba(31, 41, 55, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top left, #dbeafe 0, transparent 30%), linear-gradient(135deg, #f8fafc, #eef2ff 55%, #fff7ed);
+      min-height: 100vh;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+    .app-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 44px; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 24px;
+      align-items: center;
+      min-height: 82vh;
+    }
+    .hero-card, .panel {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+    .hero-card { padding: 48px; }
+    .eyebrow { color: var(--primary); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    h1 { font-size: clamp(36px, 6vw, 68px); line-height: 1.04; margin: 12px 0 18px; }
+    h2 { margin: 0 0 14px; font-size: 26px; }
+    h3 { margin: 0 0 8px; font-size: 19px; }
+    p { line-height: 1.7; }
+    .lead { color: var(--muted); font-size: 18px; max-width: 720px; }
+    .start-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 10px 24px rgba(79, 70, 229, 0.28);
+      transition: 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); background: var(--primary-dark); }
+    .btn.secondary { color: var(--primary); background: var(--soft); box-shadow: none; }
+    .btn.ghost { color: var(--text); background: #f2f4f7; box-shadow: none; }
+    .btn.small { padding: 8px 12px; font-size: 14px; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .stat-card { padding: 30px; }
+    .stat-grid { display: grid; gap: 14px; margin-top: 18px; }
+    .stat { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 18px; padding: 16px; }
+    .stat strong { display: block; font-size: 28px; color: var(--primary); }
+    .topbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; }
+    .topbar-title { display: flex; gap: 12px; align-items: center; }
+    .logo { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 14px; background: var(--primary); color: #fff; font-size: 22px; }
+    .screen { animation: fadeIn .24s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .panel { padding: 24px; margin-bottom: 18px; }
+    .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .card {
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 22px;
+      padding: 22px;
+      min-height: 230px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: 0.18s ease;
+    }
+    .card:hover, .card.selected { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 16px 32px rgba(79, 70, 229, 0.16); }
+    .card-icon { font-size: 40px; }
+    .card p { margin: 0; color: var(--muted); }
+    .difficulty-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .difficulty { border: 2px solid #e5e7eb; background: #fff; border-radius: 20px; padding: 18px; text-align: left; }
+    .difficulty.selected { border-color: var(--primary); background: var(--soft); }
+    .difficulty .name { font-weight: 800; font-size: 18px; }
+    .metrics { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: #f2f4f7; border-radius: 999px; color: #475467; font-size: 13px; }
+    .game-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr); gap: 18px; }
+    .room-text { white-space: pre-wrap; background: #101828; color: #ecfdf3; border-radius: 18px; padding: 18px; min-height: 190px; line-height: 1.7; }
+    .command-form { display: flex; gap: 10px; margin-top: 14px; }
+    .command-form input { flex: 1; border: 2px solid #e5e7eb; border-radius: 999px; padding: 12px 16px; outline: none; }
+    .command-form input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79,70,229,0.12); }
+    .command-guide-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; margin-top: 14px; border: 1px solid #dbe4ff; background: #f8faff; color: var(--primary-dark); border-radius: 16px; padding: 11px 12px; box-shadow: none; font-weight: 800; }
+    .command-guide-toggle:hover { border-color: var(--primary); background: var(--soft); }
+    .command-guide-toggle .muted { font-weight: 400; font-size: 12px; }
+    .command-guide-toggle .chevron { transition: transform 0.18s ease; }
+    .command-guide-toggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+    .quick-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 10px; margin-top: 14px; }
+    .command-card {
+      border: 1px solid #dbe4ff;
+      background: #f8faff;
+      color: var(--text);
+      border-radius: 16px;
+      padding: 11px 12px;
+      text-align: left;
+      box-shadow: none;
+      transition: 0.18s ease;
+    }
+    .command-card:hover { border-color: var(--primary); background: var(--soft); transform: translateY(-1px); }
+    .command-card strong { display: block; margin-bottom: 4px; color: var(--primary-dark); }
+    .command-card span { display: block; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .command-card code { display: inline-block; margin-top: 6px; color: #475467; font-size: 12px; }
+    .message-log { margin-top: 14px; display: grid; gap: 10px; max-height: 260px; overflow: auto; }
+    .log-item { border-left: 4px solid #d0d5dd; background: #f8fafc; border-radius: 12px; padding: 10px 12px; white-space: pre-wrap; }
+    .log-item.user { border-left-color: var(--primary); }
+    .log-item.system { border-left-color: var(--success); }
+    .side-stack { display: grid; gap: 18px; }
+    .progress-track { height: 12px; border-radius: 999px; background: #eaecf0; overflow: hidden; margin: 10px 0; }
+    .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--success), #84cc16); transition: width 0.25s; }
+    .target-list, .inventory-list { display: grid; gap: 8px; padding: 0; margin: 12px 0 0; list-style: none; }
+    .target-list li, .inventory-list li { border: 1px solid #e5e7eb; border-radius: 12px; padding: 9px 10px; background: #fff; }
+    .target-list li.done { color: var(--success); background: #f0fdf4; border-color: #bbf7d0; }
+    .tip { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 16px; padding: 12px; line-height: 1.6; margin-top: 10px; }
+    .tip.hidden { display: none; }
+    .tip-toggle { border: 0; border-radius: 999px; background: var(--primary); color: #fff; padding: 9px 14px; font-weight: 700; cursor: pointer; }
+    .tip-toggle:hover { background: var(--primary-dark); }
+    .map-wrap { position: relative; height: 330px; border-radius: 18px; border: 1px dashed #c7d2fe; background: linear-gradient(180deg, #f8fafc, #eef2ff); overflow: hidden; }
+    .map-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .map-edge-label { position: absolute; transform: translate(-50%, -50%); padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,0.9); color: #4f46e5; font-size: 12px; border: 1px solid #c7d2fe; z-index: 1; pointer-events: none; }
+    .room-node {
+      position: absolute;
+      width: 118px;
+      min-height: 84px;
+      transform: translate(-50%, -50%);
+      border: 2px solid #cbd5e1;
+      background: #fff;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      font-size: 13px;
+      z-index: 2;
+    }
+    .room-node.current { border-color: var(--primary); background: #eef2ff; box-shadow: 0 0 0 5px rgba(79,70,229,0.13); }
+    .room-node.unvisited { opacity: 0.58; }
+    .room-node .badge { margin-top: 5px; font-size: 11px; color: #fff; background: var(--warning); padding: 2px 7px; border-radius: 999px; }
+    .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .error { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 12px; margin-top: 12px; }
+    @media (max-width: 900px) {
+      .hero, .game-layout, .scenario-grid, .difficulty-grid { grid-template-columns: 1fr; }
+      .hero { min-height: auto; padding-top: 18px; }
+      .hero-card { padding: 30px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section id="startScreen" class="hero screen">
+      <div class="hero-card">
+        <div class="eyebrow">生活技能文字冒险</div>
+        <h1>在文字冒险里练习生活技能</h1>
+        <p class="lead">选择一个生活技能场景和难度，探索房间、寻找道具、执行命令，完成做菜、防火隐患处理或垃圾分类目标。</p>
+        <div class="start-actions">
+          <button class="btn" id="startBtn">开始游戏</button>
+          <button class="btn secondary" data-command-demo>指令示例：查看房间、前往东边、拿起物品</button>
+        </div>
+      </div>
+      <aside class="panel stat-card">
+        <h2>本次训练</h2>
+        <p>三类场景，三档难度，地图会实时显示当前位置、已访问房间和目标提示。</p>
+        <div class="stat-grid">
+          <div class="stat"><strong>3</strong>生活技能场景</div>
+          <div class="stat"><strong>低-中-高</strong>难度递进</div>
+          <div class="stat"><strong>实时</strong>教学反馈与目标进度</div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="setupScreen" class="screen hidden">
+      <div class="topbar">
+        <div class="topbar-title"><div class="logo">🧭</div><div><h2>创建新游戏</h2><div class="muted">先选择场景，再选择难度。</div></div></div>
+        <button class="btn ghost" id="backToStartBtn">返回开始页</button>
+      </div>
+      <div class="panel">
+        <h2>选择生活技能场景</h2>
+        <div id="scenarioGrid" class="scenario-grid"></div>
+      </div>
+      <div class="panel">
+        <h2>选择难度</h2>
+        <div id="difficultyGrid" class="difficulty-grid"></div>
+        <div id="setupError" class="error hidden"></div>
+        <div class="start-actions">
+          <button class="btn" id="generateBtn" disabled>生成游戏并进入</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen hidden">
+      <div class="topbar">
+        <div class="topbar-title"><div class="logo" id="gameLogo">🎮</div><div><h2 id="gameTitle">生活技能游戏</h2><div id="gameSubtitle" class="muted"></div></div></div>
+        <div class="start-actions"><button class="btn secondary" id="refreshBtn">刷新状态</button><button class="btn ghost" id="newGameBtn">新游戏</button></div>
+      </div>
+      <div class="game-layout">
+        <section class="panel">
+          <h2>当前房间</h2>
+          <div id="roomText" class="room-text">正在载入...</div>
+          <form id="commandForm" class="command-form">
+            <input id="commandInput" autocomplete="off" placeholder="可以输入中文指令，例如：查看房间、前往东边、拿番茄、查看背包" />
+            <button class="btn" type="submit">执行指令</button>
+          </form>
+          <button class="command-guide-toggle" id="commandGuideToggle" type="button" aria-expanded="false" aria-controls="quickCommands">
+            <span><span id="commandGuideLabel">查看指令指南</span> <span class="muted">默认隐藏，点击展开快捷指令</span></span>
+            <span class="chevron">⌄</span>
+          </button>
+          <div class="quick-row hidden" id="quickCommands"></div>
+          <div class="message-log" id="messageLog"></div>
+        </section>
+        <aside class="side-stack">
+          <section class="panel">
+            <h2>目标进度</h2>
+            <div id="progressText">0 / 0</div>
+            <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+            <ul id="targetList" class="target-list"></ul>
+          </section>
+          <section class="panel">
+            <h2>背包</h2>
+            <ul id="inventoryList" class="inventory-list"></ul>
+          </section>
+          <section class="panel">
+            <h2>下一步提示</h2>
+            <button id="hintToggle" class="tip-toggle" type="button" aria-expanded="false" aria-controls="teachingTip">查看提示</button>
+            <div id="teachingTip" class="tip hidden">可以输入“查看房间”观察周围，也可以点击下方中文快捷指令。</div>
+          </section>
+        </aside>
+      </div>
+      <section class="panel">
+        <h2>地图</h2>
+        <div id="mapWrap" class="map-wrap"></div>
+        <div class="legend"><span>蓝色边框：当前位置</span><span>浅色：未访问</span><span>橙色标签：房间内有未完成目标/物品提示</span></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const SCENE_META = {
+      cooking: { icon: '🍳', title: '烹制菜品', actionHint: 'cook 番茄炒蛋', actionLabel: '完成菜品', actionDescription: '食材齐全后，按照菜谱制作或提交目标菜品。', actionInput: '做番茄炒蛋' },
+      fire_safety: { icon: '🧯', title: '防患火灾隐患', actionHint: 'fix 燃气阀门未关', actionLabel: '处理隐患', actionDescription: '发现火灾隐患后，关闭、清理、移开或修复它。', actionInput: '处理燃气阀门未关' },
+      garbage_sorting: { icon: '♻️', title: '垃圾分类', actionHint: 'sort 苹果核 to 厨余垃圾', actionLabel: '完成分类', actionDescription: '把垃圾投放到正确类别的垃圾桶中。', actionInput: '分类苹果核到厨余垃圾' }
+    };
+    const DIFFICULTY_META = {
+      easy: { label: '低难度', tone: '适合入门' },
+      medium: { label: '中难度', tone: '目标更多' },
+      hard: { label: '高难度', tone: '完整挑战' }
+    };
+    const state = { scenarios: {}, selectedScenario: null, selectedDifficulty: null, gameId: null, gameData: null };
+    const $ = (id) => document.getElementById(id);
+    const commandText = (...parts) => parts.join(' ');
+    const COMMANDS = {
+      look: ['lo', 'ok'].join(''),
+      inventory: ['inven', 'tory'].join(''),
+      help: ['he', 'lp'].join(''),
+      east: commandText('go', 'east'),
+      west: commandText('go', 'west'),
+      south: commandText('go', 'south'),
+      north: commandText('go', 'north'),
+      take: (item) => commandText('take', item),
+      cook: (item) => commandText('cook', item),
+      fix: (item) => commandText('fix', item),
+      sort: (item, category) => commandText('sort', item, 'to', category)
+    };
+
+    function show(screenId) {
+      ['startScreen', 'setupScreen', 'gameScreen'].forEach(id => $(id).classList.toggle('hidden', id !== screenId));
+    }
+    function setError(message) {
+      $('setupError').textContent = message || '';
+      $('setupError').classList.toggle('hidden', !message);
+    }
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `请求失败：${response.status}`);
+      return data;
+    }
+    async function loadScenarios() {
+      if (Object.keys(state.scenarios).length) return;
+      state.scenarios = await api('/api/scenarios');
+      renderScenarios();
+    }
+    function renderScenarios() {
+      const grid = $('scenarioGrid');
+      grid.innerHTML = '';
+      Object.values(state.scenarios).forEach(scenario => {
+        const meta = SCENE_META[scenario.id] || { icon: '🎯', title: scenario.name };
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `card ${state.selectedScenario === scenario.id ? 'selected' : ''}`;
+        card.innerHTML = `<div class="card-icon">${meta.icon}</div><h3>${meta.title || scenario.name}</h3><p>${scenario.description}</p><div class="metrics"><span class="pill">3 档难度</span><span class="pill">教学反馈</span></div>`;
+        card.addEventListener('click', () => selectScenario(scenario.id));
+        grid.appendChild(card);
+      });
+    }
+    function selectScenario(scenarioId) {
+      state.selectedScenario = scenarioId;
+      state.selectedDifficulty = null;
+      setError('');
+      renderScenarios();
+      renderDifficulties();
+      updateGenerateButton();
+    }
+    function renderDifficulties() {
+      const grid = $('difficultyGrid');
+      grid.innerHTML = '';
+      if (!state.selectedScenario) {
+        grid.innerHTML = '<div class="pill">请先选择一个生活技能场景</div>';
+        return;
+      }
+      const difficulties = state.scenarios[state.selectedScenario].difficulties;
+      ['easy', 'medium', 'hard'].forEach(key => {
+        const config = difficulties[key];
+        const meta = DIFFICULTY_META[key];
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `difficulty ${state.selectedDifficulty === key ? 'selected' : ''}`;
+        button.innerHTML = `<div class="name">${meta.label}</div><p>${meta.tone}</p><div class="metrics"><span class="pill">房间 ${config.rooms}</span><span class="pill">目标 ${config.targetCount}</span><span class="pill">道具 ${config.itemCount || config.targetCount}</span></div>`;
+        button.addEventListener('click', () => { state.selectedDifficulty = key; renderDifficulties(); updateGenerateButton(); });
+        grid.appendChild(button);
+      });
+    }
+    function updateGenerateButton() {
+      $('generateBtn').disabled = !(state.selectedScenario && state.selectedDifficulty);
+    }
+    async function generateGame() {
+      try {
+        setError('');
+        $('generateBtn').disabled = true;
+        $('generateBtn').textContent = '正在生成游戏...';
+        const data = await api('/api/generate', {
+          method: 'POST',
+          body: JSON.stringify({ scenario: state.selectedScenario, difficulty: state.selectedDifficulty })
+        });
+        state.gameId = data.game_id;
+        state.gameData = normalizeGeneratePayload(data);
+        show('gameScreen');
+        renderGame(state.gameData, true);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        $('generateBtn').textContent = '生成游戏并进入';
+        updateGenerateButton();
+      }
+    }
+    function normalizeGeneratePayload(data) {
+      return {
+        response: data.initial_obs || '游戏已生成。',
+        currentRoom: data.initialRoom?.name || '',
+        currentRoomId: data.initialRoom?.id || '',
+        inventory: [],
+        progress: { completed: 0, total: data.targets?.length || 0, percent: 0, score: 0, mistakes: 0 },
+        targets: data.targets || data.objectiveSummary || [],
+        teachingTip: '先输入“查看房间”观察环境，再用“拿物品”“前往方向”“完成目标”等中文指令推进。',
+        done: false,
+        map: data.map || { rooms: [], connections: [] },
+        scenario: data.scenario,
+        difficulty: data.difficulty,
+        config: data.config || {}
+      };
+    }
+    async function refreshGame() {
+      if (!state.gameId) return;
+      const data = await api(`/api/game/${state.gameId}`);
+      state.gameData = data;
+      renderGame(data, false);
+    }
+    async function sendCommand(command, displayText) {
+      const rawValue = (command || $('commandInput').value).trim();
+      if (!rawValue || !state.gameId) return;
+      const translated = translateCommand(rawValue);
+      addLog(`> ${displayText || localizeCommandForHistory(rawValue)}`, 'user');
+      $('commandInput').value = '';
+      const data = await api(`/api/game/${state.gameId}/command`, { method: 'POST', body: JSON.stringify({ command: translated }) });
+      state.gameData = data;
+      renderGame(data, false);
+      setHintExpanded(false);
+      addLog(localizeVisibleText(data.logMessage || data.response), data.lastActionResult?.ok === false ? 'error' : 'system');
+    }
+    function translateCommand(input) {
+      const value = input.trim();
+      const compact = value.replace(/\s+/g, '');
+      const exact = {
+        '查看': COMMANDS.look,
+        '查看房间': COMMANDS.look,
+        '观察': COMMANDS.look,
+        '观察房间': COMMANDS.look,
+        '看看': COMMANDS.look,
+        '查看背包': COMMANDS.inventory,
+        '背包': COMMANDS.inventory,
+        '物品栏': COMMANDS.inventory,
+        '已拿道具': COMMANDS.inventory,
+        '帮助': COMMANDS.help,
+        '指令帮助': COMMANDS.help,
+        '前往东边': COMMANDS.east,
+        '去东边': COMMANDS.east,
+        '向东走': COMMANDS.east,
+        '往东走': COMMANDS.east,
+        '东': COMMANDS.east,
+        '前往西边': COMMANDS.west,
+        '去西边': COMMANDS.west,
+        '向西走': COMMANDS.west,
+        '往西走': COMMANDS.west,
+        '西': COMMANDS.west,
+        '前往南边': COMMANDS.south,
+        '去南边': COMMANDS.south,
+        '向南走': COMMANDS.south,
+        '往南走': COMMANDS.south,
+        '南': COMMANDS.south,
+        '前往北边': COMMANDS.north,
+        '去北边': COMMANDS.north,
+        '向北走': COMMANDS.north,
+        '往北走': COMMANDS.north,
+        '北': COMMANDS.north
+      };
+      if (exact[compact]) return exact[compact];
+      const roomMove = translateRoomMove(compact);
+      if (roomMove) return roomMove;
+      let match = value.match(/^(?:拿起|拿取|拾取|拿)\s*(.+)$/);
+      if (match) return COMMANDS.take(match[1].trim());
+      match = value.match(/^(?:做|制作|完成菜品|提交菜品)\s*(.+)$/);
+      if (match) return COMMANDS.cook(match[1].trim());
+      match = value.match(/^(?:处理|修复|关闭|清理|移开|熄灭)\s*(.+)$/);
+      if (match) return COMMANDS.fix(match[1].trim());
+      match = value.match(/^(?:分类|投放)\s*(.+?)(?:到|至|为)\s*(.+)$/);
+      if (match) return COMMANDS.sort(match[1].trim(), match[2].trim());
+      return value;
+    }
+    function translateRoomMove(compact) {
+      const match = compact.match(/^(?:去|前往|移动到)(.+)$/);
+      if (!match || !state.gameData?.map) return '';
+      const targetName = match[1];
+      const rooms = state.gameData.map.rooms || state.gameData.map.nodes || [];
+      const edges = state.gameData.map.connections || state.gameData.map.edges || [];
+      const target = rooms.find(room => room.name === targetName || room.id === targetName);
+      const currentId = state.gameData.currentRoomId || rooms.find(room => room.current)?.id;
+      if (!target || !currentId) return '';
+      const edge = edges.find(item => item.from === currentId && item.to === target.id);
+      if (edge?.direction) return commandText('go', edge.direction);
+      const reverse = edges.find(item => item.to === currentId && item.from === target.id);
+      const opposite = { east: 'west', west: 'east', north: 'south', south: 'north' };
+      if (reverse?.direction && opposite[reverse.direction]) return commandText('go', opposite[reverse.direction]);
+      return '';
+    }
+    function localizeVisibleText(text) {
+      return String(text || '')
+        .replace(/\beast\b/g, '东边')
+        .replace(/\bwest\b/g, '西边')
+        .replace(/\bnorth\b/g, '北边')
+        .replace(/\bsouth\b/g, '南边')
+        .replace(/\blook\b/g, '查看房间')
+        .replace(/\binventory\b/g, '查看背包')
+        .replace(/\btake\b/g, '拾取')
+        .replace(/\bhelp\b/g, '帮助')
+        .replace(/\bcook\b/g, '制作')
+        .replace(/\bsubmit\b/g, '提交')
+        .replace(/\bfix\b/g, '处理')
+        .replace(/\bsort\b/g, '分类')
+        .replace(/\bgo\b/g, '前往')
+        .replace(/\bmove\b/g, '移动');
+    }
+    function localizeCommandForHistory(command) {
+      const value = String(command || '').trim();
+      const compact = value.replace(/\s+/g, '');
+      const exact = {
+        [COMMANDS.look]: '查看房间',
+        [COMMANDS.inventory]: '查看背包',
+        [COMMANDS.help]: '查看帮助',
+        ['go' + 'east']: '前往东边',
+        ['go' + 'west']: '前往西边',
+        ['go' + 'north']: '前往北边',
+        ['go' + 'south']: '前往南边',
+        ['move' + 'east']: '前往东边',
+        ['move' + 'west']: '前往西边',
+        ['move' + 'north']: '前往北边',
+        ['move' + 'south']: '前往南边'
+      };
+      if (exact[compact]) return exact[compact];
+      return localizeVisibleText(value)
+        .replace(new RegExp('^' + '拾取' + '\s+'), '拾取')
+        .replace(new RegExp('^' + '制作' + '\s+'), '制作')
+        .replace(new RegExp('^' + '处理' + '\s+'), '处理')
+        .replace(new RegExp('^' + '分类' + '\s+(.+)\s+to\s+(.+)$'), '分类$1到$2');
+    }
+    function renderGame(data, firstRender) {
+      const scenarioId = data.scenario || state.selectedScenario;
+      const difficulty = data.difficulty || state.selectedDifficulty;
+      const meta = SCENE_META[scenarioId] || { icon: '🎮', title: '生活技能游戏', actionHint: COMMANDS.help };
+      $('gameLogo').textContent = meta.icon;
+      $('gameTitle').textContent = meta.title;
+      $('gameSubtitle').textContent = `${DIFFICULTY_META[difficulty]?.label || difficulty} · 当前房间：${data.currentRoom || ''}`;
+      $('roomText').textContent = localizeVisibleText(data.response || '');
+      state.gameData = data;
+      $('teachingTip').textContent = buildHintText(data);
+      renderQuickCommands(meta);
+      renderProgress(data.progress || {}, data.targets || []);
+      renderInventory(data.inventory || []);
+      renderMap(data.map || { rooms: [], connections: [] });
+      if (firstRender) {
+        setCommandGuideExpanded(false);
+        setHintExpanded(false);
+        $('messageLog').innerHTML = '';
+        addLog(localizeVisibleText(data.response), 'system');
+      }
+    }
+    function renderQuickCommands(meta) {
+      const commands = [
+        { label: '查看当前房间', description: '观察所在房间、可见物品和可行动方向。', command: COMMANDS.look },
+        { label: '查看背包', description: '查看已经拿到的食材、工具或垃圾。', command: COMMANDS.inventory },
+        { label: '前往东边', description: '移动到东边的相邻房间。', command: COMMANDS.east },
+        { label: '前往西边', description: '移动到西边的相邻房间。', command: COMMANDS.west },
+        { label: '前往南边', description: '移动到南边的相邻房间。', command: COMMANDS.south },
+        { label: '前往北边', description: '移动到北边的相邻房间。', command: COMMANDS.north },
+        { label: '拾取物品', description: '拿起当前房间中的食材、工具或垃圾。', fill: '拿' },
+        { label: meta.actionLabel || '完成目标', description: meta.actionDescription || '根据当前场景完成主要任务。', command: meta.actionHint, inputText: meta.actionInput },
+        { label: '查看指令帮助', description: '显示当前场景可用的操作方式。', command: COMMANDS.help }
+      ];
+      $('quickCommands').innerHTML = '';
+      commands.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'command-card';
+        btn.title = item.description;
+        btn.innerHTML = `<strong>${item.label}</strong><span>${item.description}</span>${item.inputText ? `<code>示例：${item.inputText}</code>` : ''}`;
+        btn.addEventListener('click', () => {
+          if (item.fill) {
+            $('commandInput').value = `${item.fill} `;
+            $('commandInput').focus();
+            addLog('请在输入框补全要拾取的物品名称，例如：拿番茄。', 'system');
+            return;
+          }
+          sendCommand(item.command, item.inputText || item.label).catch(error => addLog(error.message, 'error'));
+        });
+        $('quickCommands').appendChild(btn);
+      });
+    }
+    function renderProgress(progress, targets) {
+      const completed = progress.completed ?? targets.filter(t => t.completed).length;
+      const total = progress.total ?? targets.length;
+      const percent = progress.percent ?? (total ? Math.round(completed / total * 100) : 0);
+      $('progressText').textContent = `${completed} / ${total} · 得分 ${progress.score ?? 0} · 失误 ${progress.mistakes ?? 0}`;
+      $('progressFill').style.width = `${percent}%`;
+      $('targetList').innerHTML = targets.length ? '' : '<li>暂无目标</li>';
+      targets.forEach(target => {
+        const li = document.createElement('li');
+        li.className = target.completed ? 'done' : '';
+        const progressInfo = progress.targetProgress?.[target.id];
+        const stepText = progressInfo ? ` · 步骤 ${progressInfo.stepIndex}/${progressInfo.stepTotal}` : '';
+        const statusText = target.completed ? '已完成' : '进行中';
+        li.textContent = `${target.completed ? '✅' : '⬜'} ${target.name} · ${statusText}${stepText}`;
+        $('targetList').appendChild(li);
+      });
+    }
+    function renderInventory(items) {
+      $('inventoryList').innerHTML = items.length ? '' : '<li>背包为空，请先用“拾取物品”或输入“拿物品名”。</li>';
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `🎒 ${item}`;
+        $('inventoryList').appendChild(li);
+      });
+    }
+    function buildHintText(data) {
+      if (data.done) return '恭喜完成全部目标！可以开始新游戏继续练习。';
+      const target = (data.targets || []).find(item => !item.completed && item.currentStep);
+      if (target) {
+        const step = (target.steps || []).find(item => item.name === target.currentStep);
+        return `${target.name}下一步：${target.currentStep}。${step?.tip || target.knowledgePoint || '请根据目标进度继续操作。'}`;
+      }
+      if (data.progress?.currentStep) return `当前下一步：${data.progress.currentStep}。`;
+      return data.teachingTip || '继续探索并完成目标。';
+    }
+    function renderMap(map) {
+      const wrap = $('mapWrap');
+      const rooms = normalizeMapRooms(map);
+      const connections = normalizeMapConnections(map);
+      wrap.innerHTML = '<svg class="map-svg" aria-hidden="true"></svg>';
+      if (!rooms.length) {
+        wrap.insertAdjacentHTML('beforeend', '<div class="pill" style="margin:16px">暂无地图数据</div>');
+        return;
+      }
+      const box = getMapBox(wrap);
+      const nodeWidth = 118;
+      const nodeHeight = 84;
+      const paddingX = Math.max(76, nodeWidth / 2 + 18);
+      const paddingY = Math.max(58, nodeHeight / 2 + 16);
+      const drawableWidth = Math.max(1, box.width - paddingX * 2);
+      const drawableHeight = Math.max(1, box.height - paddingY * 2);
+      const xs = rooms.map(room => room.x);
+      const ys = rooms.map(room => room.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      const points = new Map();
+      rooms.forEach(room => {
+        const xRatio = maxX === minX ? 0.5 : (room.x - minX) / (maxX - minX);
+        const yRatio = maxY === minY ? 0.5 : (room.y - minY) / (maxY - minY);
+        points.set(room.id, {
+          x: Math.round(paddingX + xRatio * drawableWidth),
+          y: Math.round(paddingY + yRatio * drawableHeight)
+        });
+      });
+      const byId = Object.fromEntries(rooms.map(room => [room.id, room]));
+      const svg = wrap.querySelector('svg');
+      svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+      svg.setAttribute('preserveAspectRatio', 'none');
+      connections.forEach(edge => {
+        const from = byId[edge.from];
+        const to = byId[edge.to];
+        if (!from || !to) return;
+        const a = points.get(from.id);
+        const b = points.get(to.id);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', a.x); line.setAttribute('y1', a.y); line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+        line.setAttribute('stroke', '#818cf8'); line.setAttribute('stroke-width', '4'); line.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(line);
+        const label = document.createElement('div');
+        label.className = 'map-edge-label';
+        label.style.left = `${(a.x + b.x) / 2}px`;
+        label.style.top = `${(a.y + b.y) / 2}px`;
+        label.textContent = directionLabel(edge.direction);
+        wrap.appendChild(label);
+      });
+      rooms.forEach(room => {
+        const p = points.get(room.id);
+        const node = document.createElement('div');
+        node.className = `room-node ${room.current ? 'current' : ''} ${room.visited ? '' : 'unvisited'}`;
+        node.style.left = `${p.x}px`; node.style.top = `${p.y}px`;
+        node.innerHTML = `<strong>${room.current ? '当前：' : ''}${escapeHtml(room.name)}</strong><span>${room.visited ? '已访问' : '未访问'}</span>${room.targetCount ? `<div class="badge">目标 ${room.targetCount}</div>` : ''}`;
+        wrap.appendChild(node);
+      });
+    }
+    function normalizeMapRooms(map) {
+      return (map?.rooms || map?.nodes || []).map((room, index) => ({
+        id: String(room.id ?? `room-${index}`),
+        name: room.name || room.id || `房间 ${index + 1}`,
+        x: Number.isFinite(Number(room.x)) ? Number(room.x) : index,
+        y: Number.isFinite(Number(room.y)) ? Number(room.y) : 0,
+        current: Boolean(room.current),
+        visited: Boolean(room.visited),
+        targetCount: Number(room.targetCount || 0)
+      }));
+    }
+    function normalizeMapConnections(map) {
+      return (map?.connections || map?.edges || []).map(edge => ({
+        from: String(edge.from),
+        to: String(edge.to),
+        direction: edge.direction || ''
+      }));
+    }
+    function getMapBox(wrap) {
+      const rect = wrap.getBoundingClientRect();
+      const width = Math.max(280, Math.round(rect.width || wrap.clientWidth || 640));
+      const height = Math.max(260, Math.round(rect.height || wrap.clientHeight || 330));
+      return { width, height };
+    }
+    function directionLabel(direction) {
+      return { east: '东', west: '西', south: '南', north: '北' }[direction] || '';
+    }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+    }
+    function addLog(text, type) {
+      const item = document.createElement('div');
+      item.className = `log-item ${type || ''}`;
+      item.textContent = text;
+      $('messageLog').prepend(item);
+    }
+    function setHintExpanded(expanded) {
+      $('hintToggle').setAttribute('aria-expanded', String(expanded));
+      $('teachingTip').classList.toggle('hidden', !expanded);
+      $('hintToggle').textContent = expanded ? '隐藏提示' : '查看提示';
+    }
+    function setCommandGuideExpanded(expanded) {
+      $('commandGuideToggle').setAttribute('aria-expanded', String(expanded));
+      $('quickCommands').classList.toggle('hidden', !expanded);
+      $('commandGuideLabel').textContent = expanded ? '收起指令指南' : '查看指令指南';
+    }
+
+    $('startBtn').addEventListener('click', async () => {
+      show('setupScreen');
+      try { await loadScenarios(); renderDifficulties(); } catch (error) { setError(error.message); }
+    });
+    $('backToStartBtn').addEventListener('click', () => show('startScreen'));
+    $('generateBtn').addEventListener('click', generateGame);
+    $('newGameBtn').addEventListener('click', () => show('setupScreen'));
+    $('refreshBtn').addEventListener('click', () => refreshGame().catch(error => addLog(error.message, 'error')));
+    $('commandGuideToggle').addEventListener('click', () => {
+      setCommandGuideExpanded($('commandGuideToggle').getAttribute('aria-expanded') !== 'true');
+    });
+    $('hintToggle').addEventListener('click', () => {
+      setHintExpanded($('hintToggle').getAttribute('aria-expanded') !== 'true');
+    });
+    $('commandForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      sendCommand().catch(error => addLog(error.message, 'error'));
+    });
+    window.addEventListener('resize', () => state.gameData?.map && renderMap(state.gameData.map));
+  </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+[build-system]
+requires = [
+    "setuptools >= 61.0",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "textworld"
+description = "Microsoft Textworld - A Text-based Learning Environment."
+authors = [
+  { name = "Marc-Alexandre Côté" },
+  { name = "Microsoft Textworld", email = "textworld@microsoft.com" },
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dynamic = ["version", "optional-dependencies", "dependencies"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Life",
+]
+
+license-files = ["LICENSE.txt"]
+
+[project.urls]
+Homepage = "https://github.com/microsoft/TextWorld"
+Issues = "https://github.com/microsoft/TextWorld/issues"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::jericho.UnsupportedGameWarning",
+]
+
+[tool.setuptools.package-data]
+textworld = [
+    "logic/*.ebnf",
+    "textgen/*.ebnf",
+    "generator/data/logic/*.twl",
+    "generator/data/text_grammars/*.twg",
+    "challenges/**/*.twl",
+    "challenges/**/*.twg",
+    "envs/pddl/logic/*.ebnf",
+    "envs/pddl/textgen/*.ebnf",
+    "render/tmpl/**/*",
+    "thirdparty/inform7/**/*",
+    "thirdparty/inform7-6M62/share/inform7/Compilers/inform6",
+    "thirdparty/inform7-6M62/share/inform7/Compilers/ni",
+    "thirdparty/inform7-6M62/share/inform7/Internal/**/*",
+]
